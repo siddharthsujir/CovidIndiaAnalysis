@@ -12,6 +12,9 @@ object CovidProcessor {
     println("Starting Processing!")
     var covid_India=FileReader.loadFileToDS("covid_19_india.csv",sparkSession,sc)
     covidTotal_ByStates(covid_India)
+
+    var individual_details= FileReader.loadIndividualDetailsToDS("IndividualDetails.csv",sparkSession,sc);
+    individual_details.show(100);
   }
 
   def covidTotal_ByStates(ds:Dataset[CovidIndiaCases]): Unit = {

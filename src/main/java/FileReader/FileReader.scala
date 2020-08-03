@@ -1,6 +1,6 @@
 package FileReader
 
-import caseclass.CovidIndiaCases
+import caseclass.{CovidIndiaCases, IndividualDetails}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
@@ -28,6 +28,18 @@ object FileReader {
         .option("inferSchema","true")
         .option("path",filename)
         .load().as[CovidIndiaCases];
+  }
+
+  def loadIndividualDetailsToDS(filename: String, sparkSession: SparkSession,sc: SparkContext): Dataset[IndividualDetails] = {
+    import sparkSession.sqlContext.implicits._;
+
+    return sparkSession.read.format("csv")
+        .option("inferSchema","true")
+        .option("header","true")
+        .option("path",filename)
+        .option("nullValue","-")
+        .load()
+        .as[IndividualDetails];
   }
 
 }
