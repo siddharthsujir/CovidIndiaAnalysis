@@ -6,6 +6,7 @@ import FileReader.FileReader
 import caseclass.{CovidIndiaCases, IndividualDetails}
 import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.{to_date,unix_timestamp,datediff,avg,coalesce,lit}
 
 object CovidProcessor {
 
@@ -18,8 +19,22 @@ object CovidProcessor {
     var individual_details= FileReader.loadIndividualDetailsToDS("IndividualDetails.csv",sparkSession,sc);
     individual_details.show(100);
 
+      var age_details=FileReader.loadAgeGroupToDS("AgeGroupDetails.csv",sparkSession,sc);
+        age_details.show(100);
+//    var averageAge= getAverage(individual_details);
+//      print("The average age is: "+ averageAge);
     findCategory(individual_details);
   }
+
+//  def getAverage(ds: Dataset[IndividualDetails]): Unit= {
+//   var ds2= ds.withColumn("age_int",col("age").cast("Int"))
+////      .filter("age_int is not null")
+////        .agg(avg(col("age_int")))
+//
+//    val expr=ds2.columns.map(c=>coalesce(col("age_int"),avg(col("age_int"))))
+//    ds2.select(expr: _*).show(1000)
+//
+//  }
 
   def covidTotal_ByStates(ds:Dataset[CovidIndiaCases]): Unit = {
 
@@ -41,6 +56,6 @@ object CovidProcessor {
     .when(col("notes").contains("relative"),"Local Transmission")
     .otherwise("unknown"))
 
-    df.show();
+    df.where(col("category").contains("travel"));
   }
 }
