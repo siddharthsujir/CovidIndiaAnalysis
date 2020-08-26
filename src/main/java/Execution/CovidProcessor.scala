@@ -1,12 +1,12 @@
 package Execution
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import FileReader.FileReader
 import caseclass.{CovidIndiaCases, IndividualDetails}
 import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.{to_date,unix_timestamp,datediff,avg,coalesce,lit}
+import org.apache.spark.sql.functions.{avg, coalesce, datediff, lit, to_date, unix_timestamp}
 
 object CovidProcessor {
 
@@ -23,7 +23,8 @@ object CovidProcessor {
         age_details.show(100);
 //    var averageAge= getAverage(individual_details);
 //      print("The average age is: "+ averageAge);
-    findCategory(individual_details);
+    var df= findCategory(individual_details);
+    df.show(1000);
   }
 
 //  def getAverage(ds: Dataset[IndividualDetails]): Unit= {
@@ -47,7 +48,7 @@ object CovidProcessor {
     df.show(100);
   }
 
-  def findCategory(ds:Dataset[IndividualDetails]): Unit ={
+  def findCategory(ds:Dataset[IndividualDetails]): DataFrame ={
 
     print("Finding Category of Spread!");
 
@@ -56,6 +57,6 @@ object CovidProcessor {
     .when(col("notes").contains("relative"),"Local Transmission")
     .otherwise("unknown"))
 
-    df.where(col("category").contains("travel"));
+    return df.where(col("category").contains("travel"));
   }
 }
