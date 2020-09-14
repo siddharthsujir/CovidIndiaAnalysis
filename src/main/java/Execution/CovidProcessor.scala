@@ -4,9 +4,11 @@ import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import FileReader.FileReader
 import caseclass.{CovidIndiaCases, IndividualDetails}
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.expressions
 import org.apache.spark.sql.functions.when
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.functions.{avg, coalesce, datediff, lit, to_date, unix_timestamp}
+import org.apache.spark.sql.functions.{avg, coalesce, datediff, lit, to_date, unix_timestamp,lag,lead,when}
 
 object CovidProcessor {
 
@@ -14,17 +16,18 @@ object CovidProcessor {
 
     println("Starting Processing!")
     var covid_India=FileReader.loadFileToDS("covid_19_india.csv",sparkSession,sc)
-    covidTotal_ByStates(covid_India)
-
+   // covidTotal_ByStates(covid_India)
+    covid_India.show(100)
     var individual_details= FileReader.loadIndividualDetailsToDS("IndividualDetails.csv",sparkSession,sc);
-    individual_details.show(100);
-
-      var age_details=FileReader.loadAgeGroupToDS("AgeGroupDetails.csv",sparkSession,sc);
-        age_details.show(100);
+    //individual_details.show(100);
+  var daily_increase=covid_Daily_Increase_ByState(covid_India)
+    daily_increase.show(100);
+     // var age_details=FileReader.loadAgeGroupToDS("AgeGroupDetails.csv",sparkSession,sc);
+       // age_details.show(100);
 //    var averageAge= getAverage(individual_details);
 //      print("The average age is: "+ averageAge);
-    var df= findCategory(individual_details);
-    df.show(1000);
+    //var df= findCategory(individual_details);
+   // df.show(1000);
   }
 
 //  def getAverage(ds: Dataset[IndividualDetails]): Unit= {
@@ -58,5 +61,18 @@ object CovidProcessor {
     .otherwise("unknown"))
 
     return df.where(col("category").contains("travel"));
+  }
+
+  def covid_Daily_Increase_ByState(ds: Dataset[CovidIndiaCases]): DataFrame = {
+    var w=Window.partitionBy("State_UnionTerritory").orderBy("Date");
+
+    var df=ds.withColumn("dail_increase",lag("Confirmed",1,0).over(w))
+      .withColumn("dail_increase2",lead("Confirmed",1,0).over(w))
+        .withColumn("IncreaseOrDecrease",
+      when(col("confirmed")-col("dail_increase")>0,"Increase")
+        .when(col("confirmed")-col("dail_increase")<0,"Decrease")
+        .otherwise("Same"))
+
+    return df;
   }
 }
